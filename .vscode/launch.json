@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Poetry Run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/discord_bot/app.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "POETRY_VIRTUALENVS_CREATE": "true"
+            },
+            "envFile": "${workspaceFolder}/.env",
+            "args": [],
+            "justMyCode": true,
+        }
+    ]
+}
