@@ -1,5 +1,6 @@
 import difflib
 from enum import Enum
+import logging
 import os
 import discord
 from discord.ext import commands
@@ -12,6 +13,9 @@ from discord_bot.database import (
     remove_profession,
     validate_connection,
 )
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 
@@ -59,9 +63,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-    print("------")
-    print("Testing db connection...")
+    logger.info(f"Logged in as {bot.user} (ID: {bot.user.id})")
+    logger.info("Testing db connection...")
     await validate_connection()
 
 

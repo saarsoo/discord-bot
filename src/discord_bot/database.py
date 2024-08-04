@@ -1,6 +1,9 @@
+import logging
 import os
 import asyncpg
 
+
+logger = logging.getLogger(__name__)
 
 DATABASE_CONNECTION_PARAMS = {
     "database": os.environ.get(
@@ -21,7 +24,7 @@ async def validate_connection():
             for param, value in DATABASE_CONNECTION_PARAMS.items()
             if param != "password"
         }
-        print(f"Connecting to the database using the following parameters: {params}")
+        logger.info(f"Connecting to the database using the following parameters: {params}")
         # Establish the connection
         conn = await asyncpg.connect(**DATABASE_CONNECTION_PARAMS)
 
@@ -34,16 +37,16 @@ async def validate_connection():
             # Execute the insert query
             await conn.fetch(query)
 
-            print("Connection to the database was successful.")
+            logger.info("Connection to the database was successful.")
         finally:
             # Close the connection
             await conn.close()
     except asyncpg.PostgresError as e:
-        print(f"An error occurred while trying to connect to the database.\n{e}")
+        logger.info(f"An error occurred while trying to connect to the database.\n{e}")
 
 
 async def add_user(user_id: int, user_name: str):
-    print(f"Adding user {user_name} with ID {user_id} to the database...")
+    logger.info(f"Adding user {user_name} with ID {user_id} to the database...")
 
     try:
         # Establish the connection
@@ -61,17 +64,17 @@ async def add_user(user_id: int, user_name: str):
             # Execute the insert query
             await conn.execute(upsert_query, *upsert_data)
 
-            print(f"User {user_name} with ID {user_id} was added to the database.")
+            logger.info(f"User {user_name} with ID {user_id} was added to the database.")
         finally:
             # Close the connection
             await conn.close()
 
     except asyncpg.PostgresError as e:
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
 
 
 async def add_profession(user_id: int, profession: str):
-    print(f"Adding profession {profession} for user {user_id} to the database...")
+    logger.info(f"Adding profession {profession} for user {user_id} to the database...")
 
     try:
         # Establish the connection
@@ -89,7 +92,7 @@ async def add_profession(user_id: int, profession: str):
             # Execute the insert query
             await conn.execute(upsert_query, *upsert_data)
 
-            print(
+            logger.info(
                 f"Profession {profession} for user {user_id} was added to the database."
             )
         finally:
@@ -97,11 +100,11 @@ async def add_profession(user_id: int, profession: str):
             await conn.close()
 
     except asyncpg.PostgresError as e:
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
 
 
 async def remove_profession(user_id: int, profession: str):
-    print(f"Removing profession {profession} for user {user_id} from the database...")
+    logger.info(f"Removing profession {profession} for user {user_id} from the database...")
 
     try:
         # Establish the connection
@@ -117,7 +120,7 @@ async def remove_profession(user_id: int, profession: str):
             # Execute the insert query
             await conn.execute(query, *data)
 
-            print(
+            logger.info(
                 f"Profession {profession} for user {user_id} was removed from the database."
             )
         finally:
@@ -125,11 +128,11 @@ async def remove_profession(user_id: int, profession: str):
             await conn.close()
 
     except asyncpg.PostgresError as e:
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
 
 
 async def get_user_professions(user_id: int):
-    print(f"Getting professions for user {user_id} from the database...")
+    logger.info(f"Getting professions for user {user_id} from the database...")
 
     try:
         # Establish the connection
@@ -145,18 +148,18 @@ async def get_user_professions(user_id: int):
             # Execute the insert query
             professions = await conn.fetch(query, *data)
 
-            print(f"Professions for user {user_id} were retrieved from the database.")
+            logger.info(f"Professions for user {user_id} were retrieved from the database.")
             return professions
         finally:
             # Close the connection
             await conn.close()
 
     except asyncpg.PostgresError as e:
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
 
 
 async def get_all_professions() -> list[dict]|None:
-    print(f"Getting all professions from the database...")
+    logger.info(f"Getting all professions from the database...")
 
     try:
         # Establish the connection
@@ -173,11 +176,11 @@ async def get_all_professions() -> list[dict]|None:
             # Execute the insert query
             professions = await conn.fetch(query)
 
-            print(f"All professions were retrieved from the database.")
+            logger.info(f"All professions were retrieved from the database.")
             return professions
         finally:
             # Close the connection
             await conn.close()
 
     except asyncpg.PostgresError as e:
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
