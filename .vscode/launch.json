@@ -8,12 +8,15 @@
             "program": "${workspaceFolder}/src/discord_bot/app.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
-            "env": {
-                "POETRY_VIRTUALENVS_CREATE": "true"
-            },
             "envFile": "${workspaceFolder}/.env",
             "args": [],
             "justMyCode": true,
+            "autoReload": {
+                "enabled": true,
+                "exclude": [
+                    "${workspaceFolder}/.venv/**"
+                ]
+            }
         }
     ]
 }
