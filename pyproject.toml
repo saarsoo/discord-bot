@@ -8,6 +8,7 @@ authors = ["Johan Saarsoo <johan@saarsoo.se>"]
 python = "^3.12"
 discord-py = "^2.4.0"
 python-dotenv = "^1.0.1"
+asyncpg = "^0.29.0"
 
 
 [build-system]

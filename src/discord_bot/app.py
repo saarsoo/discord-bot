@@ -4,6 +4,15 @@ import os
 import discord
 from discord.ext import commands
 
+from discord_bot.database import (
+    add_profession,
+    add_user,
+    get_all_professions,
+    get_user_professions,
+    remove_profession,
+    validate_connection,
+)
+
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 
 
@@ -52,6 +61,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------")
+    print("Testing db connection...")
+    await validate_connection()
 
 
 @bot.event
@@ -68,9 +79,6 @@ async def on_message(message):
 @bot.command(name="ping")
 async def ping(ctx):
     await ctx.send("Pong!")
-
-
-all_professions: dict[discord.Member, list[Profession]] = {}
 
 
 def find_prof(prof_str):
@@ -93,6 +101,8 @@ def find_prof(prof_str):
 
 @bot.command(name="add-prof")
 async def add_prof(ctx):
+    await add_user(ctx.message.author.id, ctx.message.author.display_name)
+
     split = ctx.message.content.split(" ")
     if len(split) < 2:
         await ctx.send("Please provide one or more professions to register.")
@@ -109,18 +119,8 @@ async def add_prof(ctx):
         channel = ctx.channel
         author = ctx.message.author
 
-        if author not in all_professions:
-            all_professions[author] = []
+        await add_profession(author.id, profession.value)
 
-        if profession in all_professions[author]:
-            await ctx.send(f'Profession "{profession.value}" already registered.')
-            continue
-
-        all_professions[author].append(profession)
-
-        print(
-            f"Registered profession {profession} by {author} ({author.id}) in {guild} in {channel}"
-        )
         await ctx.send(
             f'Registered profession "{profession.value}" for user "{author.display_name}".'
         )
@@ -144,18 +144,8 @@ async def remove_prof(ctx):
         channel = ctx.channel
         author = ctx.message.author
 
-        if author not in all_professions:
-            all_professions[author] = []
+        await remove_profession(author.id, profession.value)
 
-        if profession not in all_professions[author]:
-            await ctx.send(f'Profession "{profession}" not found.')
-            return
-
-        all_professions[author].remove(profession)
-
-        print(
-            f"Removed profession {profession.value} by {author} ({author.id}) in {guild} in {channel}"
-        )
         await ctx.send(
             f'Removed profession "{profession.value}" for user "{author.display_name}".'
         )
@@ -163,26 +153,28 @@ async def remove_prof(ctx):
 
 @bot.command(name="list-prof")
 async def list_prof(ctx):
-    unique_professions = {
-        profession
-        for author in all_professions
-        for profession in all_professions[author]
-    }
+    all_profs = await get_all_professions()
 
-    profession_groups: dict[Profession, list[discord.Member]] = {
+    if all_profs is None:
+        await ctx.send("An error occurred.")
+        return
+
+    unique_professions = {prof["profession_name"] for prof in all_profs}
+
+    profession_groups = {
         profession: [
-            author
-            for author in all_professions
-            if profession in all_professions[author]
+            prof["user_name"]
+            for prof in all_profs
+            if prof["profession_name"] == profession
         ]
         for profession in unique_professions
     }
 
-    if len(all_professions) == 0:
+    if len(all_profs) == 0:
         await ctx.send("No professions registered.")
     else:
         prof_groups = [
-            f"{profession.value}: {', '.join([f"{author.display_name}" for author in authors])}"
+            f"{profession}: {', '.join(authors)}"
             for profession, authors in profession_groups.items()
         ]
         await ctx.send("\n".join(prof_groups))
@@ -190,12 +182,13 @@ async def list_prof(ctx):
 
 @bot.command(name="my-prof")
 async def my_prof(ctx):
+    user_professions = await get_user_professions(ctx.message.author.id)
     author = ctx.message.author
-    if author not in all_professions or len(all_professions[author]) == 0:
+    if not user_professions:
         await ctx.send(f'No professions registered for user "{author.display_name}".')
     else:
         await ctx.send(
-            f"Registered professions: {', '.join([profession.value for profession in all_professions[author]])}"
+            f"Registered professions: {', '.join([profession["profession_name"] for profession in user_professions])}"
         )
 
 
