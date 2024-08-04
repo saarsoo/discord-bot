@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  discord_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: discord_bot
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
