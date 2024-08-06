@@ -17,7 +17,7 @@ from discord_bot.database import (
     validate_connection,
 )
 from discord_bot.profession import Profession
-from discord_bot.alchemy import alchemy_recipes
+from discord_bot.profession_recipes import profession_recipes
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -74,24 +74,13 @@ def find_prof(prof_str):
         return Profession[match]
 
 
-@bot.command(name="add-prof")
-async def add_prof(ctx):
-    await add_user(ctx.message.author.id, ctx.message.author.display_name)
-
-    split = ctx.message.content.split(" ")
-    if len(split) < 2:
-        await ctx.send("Please provide one or more professions to register.")
-        return
-
-    profession_strs = ctx.message.content.split(" ")[1:]
-    for profession_str in profession_strs:
-        profession = find_prof(profession_str)
+async def _add_professions(ctx, raw_professions):
+    for raw_profession in raw_professions:
+        profession = find_prof(raw_profession)
         if profession is None:
-            await ctx.send(f"Profession `{profession_str}` not found.")
+            await ctx.send(f"Profession `{raw_profession}` not found.")
             continue
 
-        guild = ctx.guild
-        channel = ctx.channel
         author = ctx.message.author
 
         await add_profession(author.id, profession.value)
@@ -102,21 +91,17 @@ async def add_prof(ctx):
 
 
 @bot.command(name="remove-prof")
-async def remove_prof(ctx):
-    split = ctx.message.content.split(" ")
-    if len(split) < 2:
+async def remove_prof(ctx, *raw_professions):
+    if len(raw_professions) == 0:
         await ctx.send("Please provide a profession to register.")
         return
 
-    profession_strs = ctx.message.content.split(" ")[1:]
-    for profession_str in profession_strs:
-        profession = find_prof(profession_str)
+    for raw_profession in raw_professions:
+        profession = find_prof(raw_profession)
         if profession is None:
-            await ctx.send(f'Profession "{profession_str}" not found.')
+            await ctx.send(f'Profession "{raw_profession}" not found.')
             continue
 
-        guild = ctx.guild
-        channel = ctx.channel
         author = ctx.message.author
 
         await remove_profession(author.id, profession.value)
@@ -126,7 +111,7 @@ async def remove_prof(ctx):
         )
 
 
-@bot.command(name="list-prof")
+@bot.command(name="prof")
 async def list_prof(ctx):
     all_profs = await get_all_professions()
 
@@ -149,14 +134,20 @@ async def list_prof(ctx):
         await ctx.send("No professions registered.")
     else:
         prof_groups = [
-            f"{profession}: {', '.join(authors)}"
+            f"`{profession}`: {', '.join([f"`{author}`" for author in authors])}"
             for profession, authors in profession_groups.items()
         ]
         await ctx.send("\n".join(prof_groups))
 
 
 @bot.command(name="my-prof")
-async def my_prof(ctx):
+async def my_prof(ctx, *raw_professions):
+    await add_user(ctx.message.author.id, ctx.message.author.display_name)
+
+    if len(raw_professions) > 0:
+        await _add_professions(ctx, raw_professions)
+        return
+
     user_professions = await get_user_professions(ctx.message.author.id)
     author = ctx.message.author
     if not user_professions:
@@ -168,33 +159,32 @@ async def my_prof(ctx):
 
 
 @bot.command(name="add-recipe")
-async def add_recipe(ctx):
+async def add_recipe(ctx, *search_recipes):
     try:
         user_professions = await get_user_professions(ctx.message.author.id)
 
         if not user_professions:
             await ctx.send(
-                "No professions registered. Add professions with `!add-prof`."
+                "No professions registered. Add professions with `!prof <prof>`."
             )
             return
 
-        user_professions = [prof["profession_name"] for prof in user_professions]
-
-        search_recipes = [
-            recipe.strip()
-            for recipe in (" ".join(ctx.message.content.split(" ")[1:])).split(",")
-            if recipe.strip()
-        ]
+        user_professions = [Profession(prof["profession_name"]) for prof in user_professions]
 
         if not search_recipes:
             await ctx.send("Please provide one or more recipes to register.")
             return
 
-        alchemy_recipe_names = [r.lower() for r in alchemy_recipes]
+        all_recipe_names = [
+            recipe_name
+            for profession, recipes in profession_recipes.items()
+            if profession in user_professions
+            for recipe_name in list(recipes.keys())
+        ]
 
-        alchemy_matches = await _search_recipe(search_recipes, alchemy_recipe_names)
+        matches = await _search_recipe(search_recipes, all_recipe_names)
 
-        for key, recipes in alchemy_matches.items():
+        for key, recipes in matches.items():
             if not recipes:
                 await ctx.send(f"No recipe found for `{key}`.")
                 continue
@@ -214,13 +204,11 @@ async def add_recipe(ctx):
 
 
 @bot.command(name="remove-recipe")
-async def remove_recipe(ctx):
-    split = ctx.message.content.split(" ")
-    if len(split) < 2:
+async def remove_recipe(ctx, *recipe_strs):
+    if len(recipe_strs) == 0:
         await ctx.send("Please provide a recipe to remove.")
         return
 
-    recipe_strs = ctx.message.content.split(" ")[1:]
     author = ctx.message.author
     user_recipes = await get_user_recipes(author.id)
     if not user_recipes:
@@ -243,53 +231,65 @@ async def remove_recipe(ctx):
 
 
 async def _search_recipe(
-    recipes: list[str], available_recipes: list[str]
+    search_recipes: list[str], available_recipes: list[str]
 ) -> dict[str, list[str]]:
-    result_groups = {recipe: [] for recipe in recipes}
+    result_groups = {recipe: [] for recipe in search_recipes}
 
-    for recipe in recipes:
+    for search_recipe in search_recipes:
         matches = []
 
-        all_alchemy_recipes = [r.lower() for r in available_recipes]
-        if recipe in all_alchemy_recipes:
-            matches = [recipe]
+        available_recipe_names = [r.lower() for r in available_recipes]
+        if search_recipe in available_recipe_names:
+            matches = [
+                r for r in available_recipes if search_recipe.lower() == r.lower()
+            ]
         else:
-            matches = difflib.get_close_matches(recipe.lower(), all_alchemy_recipes)
-            matches = [r for r in alchemy_recipes if recipe.lower() in r.lower()]
+            matches = difflib.get_close_matches(
+                search_recipe.lower(), available_recipe_names
+            )
+            matches = [
+                r for r in available_recipes if search_recipe.lower() in r.lower()
+            ]
 
         if not matches:
-            matches = [r for r in alchemy_recipes if recipe.lower() in r.lower()]
+            matches = [
+                r for r in available_recipes if search_recipe.lower() in r.lower()
+            ]
 
         if matches:
             better_matches = [
-                match for match in matches if recipe.lower() in match.lower()
+                match for match in matches if search_recipe.lower() in match.lower()
             ]
             if better_matches:
                 matches = better_matches
 
-            if len(matches) == 1 or matches[0].lower() == recipe.lower():
+            if len(matches) == 1 or matches[0].lower() == search_recipe.lower():
                 matched_recipe = matches[0]
-                result_groups[recipe].append(matched_recipe)
+                result_groups[search_recipe].append(matched_recipe)
             else:
-                result_groups[recipe].extend(matches)
+                result_groups[search_recipe].extend(matches)
 
     return result_groups
 
 
-@bot.command(name="search-recipe")
-async def search_recipe(ctx):
-    recipes = [
-        recipe.strip()
-        for recipe in (" ".join(ctx.message.content.split(" ")[1:])).split(",")
+@bot.command(name="search")
+async def search_recipe(ctx, *recipes):
+    all_recipe_names = [
+        recipe_name
+        for profession, recipes in profession_recipes.items()
+        for recipe_name in list(recipes.keys())
     ]
 
-    all_recipes = list(alchemy_recipes.keys())
-
-    matches = await _search_recipe(recipes, all_recipes)
+    matches = await _search_recipe(recipes, all_recipe_names)
 
     if matches:
+        recipe_names = [
+            recipe_name
+            for recipe_names in matches.values()
+            for recipe_name in recipe_names
+        ]
         await ctx.send(
-            f"Available recipes {', '.join([f'`{match}`' for match in matches])}."
+            f"Available recipes {', '.join([f'`{recipe_name}`' for recipe_name in recipe_names])}."
         )
     else:
         await ctx.send(f"No recipe found for `{', '.join(recipes)}`.")
@@ -304,7 +304,7 @@ async def who(ctx):
     ]
 
     if not search_recipes:
-        await ctx.send("Please provide one or more recipes to search.")
+        await ctx.send("Please provide one or more recipes to search for.")
         return
 
     user_recipes = await get_all_recipes()
@@ -341,19 +341,57 @@ async def who(ctx):
         await ctx.send(f"No recipe found for `{', '.join(search_recipes)}`.")
 
 
+@bot.command(name="my-recipes")
+async def list_recipes(ctx):
+    user_recipes = await get_user_recipes(ctx.message.author.id)
+
+    if not user_recipes:
+        await ctx.send(
+            f"No recipes registered for user `{ctx.message.author.display_name}`."
+        )
+        return
+
+    user_recipe_names: list[str] = [recipe["recipe_name"] for recipe in user_recipes]
+
+    user_professions = await get_user_professions(ctx.message.author.id)
+    if not user_professions:
+        await ctx.send(
+            f"No professions registered for user `{ctx.message.author.display_name}`."
+        )
+        return
+
+    user_professions = [
+        Profession(prof["profession_name"]) for prof in user_professions
+    ]
+
+    recipe_groups = {
+        profession.value: [
+            user_recipe_name
+            for user_recipe_name in user_recipe_names
+            if profession in profession_recipes and user_recipe_name in profession_recipes[profession]
+        ]
+        for profession in user_professions
+    }
+
+    for profession, recipes_names in recipe_groups.items():
+        if recipes_names:
+            await ctx.send(
+                f"`{profession}`: {', '.join([f'`{recipe_name}`' for recipe_name in recipes_names])}"
+            )
+
+
 @bot.command(name="commands")
 async def list_commands(ctx):
     await ctx.send(
         "Commands:\n"
-        "`!add-prof <profession>` - Add one or more professions\n"
+        "`!who <recipe>` - Display users that can craft an item\n"
+        "`!search <recipe>` - Search for a recipe\n"
+        "`!prof` - List all user professions\n"
+        "`!my-prof` - List or register your professions\n"
         "`!remove-prof <profession>` - Remove one or more professions\n"
-        "`!list-prof` - List all registered professions\n"
-        "`!my-prof` - List your registered professions\n"
+        "`!my-recipes` - List recipes that you can craft\n"
         "`!add-recipe <recipe>` - Add one or more recipes\n"
         "`!remove-recipe <recipe>` - Remove one or more recipes\n"
-        "`!search-recipe <recipe>` - Search for a recipe\n"
-        # "!craft <recipe> - Display users that can craft an item\n"
-        "`!who <recipe>` - Display users that can craft an item\n"
     )
 
 
