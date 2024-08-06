@@ -1,5 +1,4 @@
 import difflib
-from enum import Enum
 import logging
 import os
 import discord
@@ -17,29 +16,13 @@ from discord_bot.database import (
     remove_user_recipe,
     validate_connection,
 )
+from discord_bot.profession import Profession
 from discord_bot.alchemy import alchemy_recipes
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
-
-
-class Profession(Enum):
-    alchemy = "Alchemy"
-    blacksmithing = "Blacksmithing"
-    enchanting = "Enchanting"
-    engineering = "Engineering"
-    leatherworking = "Leatherworking"
-    tailoring = "Tailoring"
-    herbalism = "Herbalism"
-    mining = "Mining"
-    skinning = "Skinning"
-    cooking = "Cooking"
-    fishing = "Fishing"
-    first_aid = "First aid"
-    lockpicking = "Lockpicking"
-
 
 profession_aliases = {
     Profession.alchemy: ["alch", "alchemist"],
