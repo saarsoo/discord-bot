@@ -18,6 +18,7 @@ from discord_bot.database import (
 )
 from discord_bot.profession import Profession, profession_aliases
 from discord_bot.profession_recipes import profession_recipes
+from discord_bot.search import search
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -166,7 +167,7 @@ async def add_recipe(ctx, *search_recipes):
             for recipe_name in list(recipes.keys())
         ]
 
-        matches = await _search_recipe(search_recipes, all_recipe_names)
+        matches = search(search_recipes, all_recipe_names)
 
         for key, recipes in matches.items():
             if not recipes:
@@ -200,7 +201,7 @@ async def remove_recipe(ctx, *recipe_strs):
         return
 
     user_recipe_names = [recipe["recipe_name"] for recipe in user_recipes]
-    matches = await _search_recipe(recipe_strs, user_recipe_names)
+    matches = search(recipe_strs, user_recipe_names)
 
     if not matches:
         await ctx.send(f"No recipe found for `{', '.join(recipe_strs)}`.")
@@ -214,47 +215,6 @@ async def remove_recipe(ctx, *recipe_strs):
                 )
 
 
-async def _search_recipe(
-    search_recipes: list[str], available_recipes: list[str]
-) -> dict[str, list[str]]:
-    result_groups = {recipe: [] for recipe in search_recipes}
-
-    for search_recipe in search_recipes:
-        matches = []
-
-        available_recipe_names = [r.lower() for r in available_recipes]
-        if search_recipe in available_recipe_names:
-            matches = [
-                r for r in available_recipes if search_recipe.lower() == r.lower()
-            ]
-        else:
-            matches = difflib.get_close_matches(
-                search_recipe.lower(), available_recipe_names
-            )
-            matches = [
-                r for r in available_recipes if search_recipe.lower() in r.lower()
-            ]
-
-        if not matches:
-            matches = [
-                r for r in available_recipes if search_recipe.lower() in r.lower()
-            ]
-
-        if matches:
-            better_matches = [
-                match for match in matches if search_recipe.lower() in match.lower()
-            ]
-            if better_matches:
-                matches = better_matches
-
-            if len(matches) == 1 or matches[0].lower() == search_recipe.lower():
-                matched_recipe = matches[0]
-                result_groups[search_recipe].append(matched_recipe)
-            else:
-                result_groups[search_recipe].extend(matches)
-
-    return result_groups
-
 
 @bot.command(name="search")
 async def search_recipe(ctx, *recipes):
@@ -264,7 +224,7 @@ async def search_recipe(ctx, *recipes):
         for recipe_name in list(recipes.keys())
     ]
 
-    matches = await _search_recipe(recipes, all_recipe_names)
+    matches = search(recipes, all_recipe_names)
 
     if matches:
         recipe_names = [
@@ -298,7 +258,7 @@ async def who(ctx):
 
     user_recipe_names = [recipe["recipe_name"] for recipe in user_recipes]
 
-    matches = await _search_recipe(search_recipes, user_recipe_names)
+    matches = search(search_recipes, user_recipe_names)
 
     # flatten the matches
     recipe_names = [match for match_list in matches.values() for match in match_list]
