@@ -41,22 +41,24 @@ async def on_ready():
     await validate_connection()
 
 
-def find_prof(prof_str):
+def find_prof(raw_profession):
     available_professions = [prof.name for prof in Profession] + [
         alias for prof in profession_aliases for alias in profession_aliases[prof]
     ]
-    matches = difflib.get_close_matches(prof_str, available_professions)
-    if len(matches) == 0:
-        return None
-    else:
-        match = matches[0]
+
+    matches = search([raw_profession], available_professions)
+
+    if matches:
+        match = matches[raw_profession][0]
 
         for prof in profession_aliases:
-            if matches[0] in profession_aliases[prof]:
+            if match in profession_aliases[prof]:
                 match = prof.name
                 break
 
         return Profession[match]
+    else:
+        return None
 
 
 async def _add_professions(ctx, raw_professions):
@@ -154,7 +156,9 @@ async def add_recipe(ctx, *search_recipes):
             )
             return
 
-        user_professions = [Profession(prof["profession_name"]) for prof in user_professions]
+        user_professions = [
+            Profession(prof["profession_name"]) for prof in user_professions
+        ]
 
         if not search_recipes:
             await ctx.send("Please provide one or more recipes to register.")
@@ -213,7 +217,6 @@ async def remove_recipe(ctx, *recipe_strs):
                 await ctx.send(
                     f"Removed recipe `{recipe}` for user `{author.display_name}`."
                 )
-
 
 
 @bot.command(name="search")
@@ -312,7 +315,8 @@ async def list_recipes(ctx):
         profession.value: [
             user_recipe_name
             for user_recipe_name in user_recipe_names
-            if profession in profession_recipes and user_recipe_name in profession_recipes[profession]
+            if profession in profession_recipes
+            and user_recipe_name in profession_recipes[profession]
         ]
         for profession in user_professions
     }
