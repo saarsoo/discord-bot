@@ -318,7 +318,7 @@ async def list_recipes(ctx):
             if profession in profession_recipes
             and user_recipe_name in profession_recipes[profession]
         ]
-        for profession in user_professions
+        for profession in profession_recipes
     }
 
     for profession, recipes_names in recipe_groups.items():
