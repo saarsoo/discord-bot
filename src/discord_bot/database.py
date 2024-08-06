@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Any
 import asyncpg
 
 
@@ -219,7 +220,7 @@ async def add_user_recipe(user_id: int, recipe: str):
         await conn.close()
 
 
-async def get_user_recipes(user_id: int) -> list[dict] | None:
+async def get_user_recipes(user_id: int) -> list[dict[str, Any]] | None:
     logger.info(f"Getting recipes for user {user_id} from the database...")
 
     try:
