@@ -16,29 +16,13 @@ from discord_bot.database import (
     remove_user_recipe,
     validate_connection,
 )
-from discord_bot.profession import Profession
+from discord_bot.profession import Profession, profession_aliases
 from discord_bot.profession_recipes import profession_recipes
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
-
-profession_aliases = {
-    Profession.alchemy: ["alch", "alchemist"],
-    Profession.blacksmithing: ["bs", "blacksmith", "hammer"],
-    Profession.enchanting: ["enchant", "enchanter"],
-    Profession.engineering: ["eng", "engineer", "cog"],
-    Profession.leatherworking: ["lw", "leatherwork", "leatherworker"],
-    Profession.tailoring: ["tailor", "cloth", "clothier"],
-    Profession.herbalism: ["herb", "herbalist", "flower"],
-    Profession.mining: ["mine", "miner"],
-    Profession.skinning: ["skin", "skinner"],
-    Profession.cooking: ["cook", "chef", "food"],
-    Profession.fishing: ["fish", "fisher", "angler"],
-    Profession.first_aid: ["aid", "heal", "healer", "bandage"],
-    Profession.lockpicking: ["lockpick", "lockpicker", "lock", "rogue"],
-}
 
 
 # Define the intents
