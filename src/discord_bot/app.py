@@ -41,7 +41,7 @@ async def on_ready():
     await validate_connection()
 
 
-def find_prof(raw_profession):
+def find_profession(raw_profession):
     available_professions = [prof.name for prof in Profession] + [
         alias for prof in profession_aliases for alias in profession_aliases[prof]
     ]
@@ -63,7 +63,7 @@ def find_prof(raw_profession):
 
 async def _add_professions(ctx, raw_professions):
     for raw_profession in raw_professions:
-        profession = find_prof(raw_profession)
+        profession = find_profession(raw_profession)
         if profession is None:
             await ctx.send(f"Profession `{raw_profession}` not found.")
             continue
@@ -84,7 +84,7 @@ async def remove_prof(ctx, *raw_professions):
         return
 
     for raw_profession in raw_professions:
-        profession = find_prof(raw_profession)
+        profession = find_profession(raw_profession)
         if profession is None:
             await ctx.send(f'Profession "{raw_profession}" not found.')
             continue
