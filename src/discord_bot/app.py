@@ -236,9 +236,13 @@ async def search_recipe(ctx, *recipes):
             for recipe_names in matches.values()
             for recipe_name in recipe_names
         ]
-        await ctx.send(
-            f"Available recipes {', '.join([f'`{recipe_name}`' for recipe_name in recipe_names])}."
-        )
+
+        if len(recipe_names) > 20:
+            message = f"Found recipes {', '.join([f'`{recipe_name}`' for recipe_name in recipe_names][:20])} ... and `{len(recipe_names) - 20}` more matches when searching for {', '.join([f'`{r}`' for r in recipes])}."
+        else:
+            message = f"Found recipes {', '.join([f'`{recipe_name}`' for recipe_name in recipe_names])} when searching for {', '.join([f'`{r}`' for r in recipes])}."
+
+        await ctx.send(message)
     else:
         await ctx.send(f"No recipe found for `{', '.join(recipes)}`.")
 
