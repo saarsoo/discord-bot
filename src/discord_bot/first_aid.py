@@ -1,0 +1,15 @@
+first_aid_recipes = {
+    "Heavy Runecloth Bandage": 18630,
+    "Runecloth Bandage": 18629,
+    "Heavy Mageweave Bandage": 10841,
+    "Mageweave Bandage": 10840,
+    "Heavy Silk Bandage": 7929,
+    "Silk Bandage": 7928,
+    "Heavy Wool Bandage": 3278,
+    "Wool Bandage": 3277,
+    "Heavy Linen Bandage": 3276,
+    "Linen Bandage": 3275,
+    "Powerful Anti-Venom": 23787,
+    "Strong Anti-Venom": 7935,
+    "Anti-Venom": 7934,
+}
