@@ -1,6 +1,7 @@
 import difflib
 import logging
 import os
+import sys
 import discord
 from discord.ext import commands
 
@@ -341,6 +342,13 @@ async def list_commands(ctx):
         "`!add-recipe <recipe>` - Add one or more recipes\n"
         "`!remove-recipe <recipe>` - Remove one or more recipes\n"
     )
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    print(error, file=sys.stderr)
+    if ctx.command:
+        await ctx.send(f"Failed to process command `{ctx.command.name}`.")
 
 
 bot.run(DISCORD_BOT_TOKEN)
