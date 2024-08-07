@@ -49,7 +49,7 @@ def find_profession(raw_profession):
 
     matches = search([raw_profession], available_professions)
 
-    if matches:
+    if matches and matches[raw_profession]:
         match = matches[raw_profession][0]
 
         for prof in profession_aliases:
