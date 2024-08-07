@@ -1,4 +1,3 @@
-import difflib
 import logging
 import os
 import sys
