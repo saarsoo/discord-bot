@@ -3,7 +3,7 @@ blacksmith_recipes = {
 	"Warcrest of the Great Chief": 461739,
 	"Invincible Mail": 461735,
 	"Stronger-hold Gauntlets": 461671,
-	"Tempered Dark Iron Plate 227871": 461667,
+	"Tempered Dark Iron Plate": 461667,
 	"Argent Elite Shoulders": 0,
 	"Shimmering Dawnbringer Shoulders": 0,
 	"Radiant Gloves of the Dawn": 0,
