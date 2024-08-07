@@ -1,4 +1,3 @@
-
 from enum import Enum
 
 
@@ -16,6 +15,8 @@ class Profession(Enum):
     fishing = "Fishing"
     first_aid = "First aid"
     lockpicking = "Lockpicking"
+    rogue_poisons = "Rogue Poisons"
+
 
 profession_aliases = {
     Profession.alchemy: ["alch", "alchemist"],
@@ -31,4 +32,5 @@ profession_aliases = {
     Profession.fishing: ["fish", "fisher", "angler"],
     Profession.first_aid: ["aid", "heal", "healer", "bandage"],
     Profession.lockpicking: ["lockpick", "lockpicker", "lock", "rogue"],
+    Profession.rogue_poisons: ["poison"],
 }
